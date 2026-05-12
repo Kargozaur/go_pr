@@ -3,7 +3,7 @@ stages:
 
 test:
   stage: test
-  image: golang:1.26
+  image: golang:1.26-trixie
   script:
     - go work sync
     - go test ./pkg/... ./services/gateway/... ./services/order-service/... ./services/payment-service/... ./services/user-service/...
