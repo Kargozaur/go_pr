@@ -6,7 +6,7 @@ test:
   image: golang:1.26
   script:
     - go test ./pkg/...  \ 
-    ./services/gateway/... \
-    ./services/order-service/... \
-    ./services/payment-service/... \
-    ./services/user-service/...
+      ./services/gateway/... \
+      ./services/order-service/... \
+      ./services/payment-service/... \
+      ./services/user-service/...
