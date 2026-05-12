@@ -35,12 +35,11 @@ func (v *Validator) verifyEmail(email string) error {
 }
 
 func (v *Validator) validatePassword(password string) error {
+	if len(password) < 8 {
+		return errors.New("Password must be at least 8 character long") // early exit before for loop
+	}
 	result := make([]error, 0, 4)
 	var isSpecial, isDigit, isUpper bool
-	if len(password) < 8 {
-		result = append(result, errors.New("Password must be at least 8 character long"))
-		return result[0] // early exit before for loop
-	}
 	for _, char := range password {
 		if unicode.IsDigit(char) {
 			isDigit = true
