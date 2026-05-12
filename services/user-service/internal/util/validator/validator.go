@@ -1,0 +1,77 @@
+package validator
+
+import (
+	"ecommerce/user-service/schemas"
+	"errors"
+	"net/mail"
+	"unicode"
+)
+
+type Validator struct{}
+
+func NewValidator() *Validator {
+	return &Validator{}
+}
+
+func (v *Validator) ValidateSchema(schema schemas.UserDefaultSchema) error {
+	result := make([]error, 0, 2)
+	if err := v.verifyEmail(schema.Email); err != nil {
+		result = append(result, err)
+	}
+	if err := v.validatePassword(schema.Password); err != nil {
+		result = append(result, err)
+	}
+	if len(result) != 0 {
+		return errors.Join(result...)
+	}
+	return nil
+}
+
+func (v *Validator) verifyEmail(email string) error {
+	if _, err := mail.ParseAddress(email); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (v *Validator) validatePassword(password string) error {
+	result := make([]error, 0, 4)
+	var isSpecial, isDigit, isUpper bool
+	if len(password) < 8 {
+		result = append(result, errors.New("Password must be at least 8 character long"))
+		return result[0] // early exit before for loop
+	}
+	for _, char := range password {
+		if unicode.IsDigit(char) {
+			isDigit = true
+			continue
+		}
+		if unicode.IsUpper(char) {
+			isUpper = true
+			continue
+		}
+		if v.validateSpecial(char) {
+			isSpecial = true
+			continue
+		}
+	}
+	if !isDigit {
+		result = append(result, errors.New("Password must contain at least one number"))
+	}
+	if !isSpecial {
+		result = append(result, errors.New("Password must contain at least "))
+	}
+	if !isUpper {
+		result = append(result, errors.New("Password must contain at least one upper case character"))
+	}
+	return errors.Join(result...)
+}
+
+func (v *Validator) validateSpecial(char rune) bool {
+	switch char {
+	case '!', '#', '$', '%', '&', '*', '+', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '^', '_', '`', '|', '~':
+		return true
+	default:
+		return false
+	}
+}
