@@ -1,7 +1,7 @@
 package validator
 
 import (
-	"ecommerce/user-service/schemas"
+	"ecommerce/user-service/internal/schemas"
 	"errors"
 	"net/mail"
 	"unicode"

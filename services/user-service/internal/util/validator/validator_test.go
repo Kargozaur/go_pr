@@ -1,8 +1,8 @@
 package validator_test
 
 import (
+	"ecommerce/user-service/internal/schemas"
 	"ecommerce/user-service/internal/util/validator"
-	"ecommerce/user-service/schemas"
 	"strings"
 	"testing"
 )

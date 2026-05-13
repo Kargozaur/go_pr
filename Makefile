@@ -1,4 +1,7 @@
-.PHONY: up down tidy run-user run-order
+include makefiles/migrate.make
+include .env
+
+.PHONY: up down tidy run-user run-order create_db
 
 up:
 	docker-compose up -d
@@ -17,3 +20,6 @@ run-order:
 
 run-user:
 	cd services/user-service && go run ./cmd/main.go
+
+create_db:
+	docker exec -it postgres bash ./docker/entrypoint.sh

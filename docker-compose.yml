@@ -1,0 +1,27 @@
+services:
+    db:
+        image: postgres:18.3-trixie
+        container_name: postgres
+        volumes:
+            - db_data:/var/lib/postgresql
+            - ./docker/entrypoint.sh:/docker/entrypoint.sh
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        ports:
+            - "5433:5432"
+        networks:
+            - internalNetwork
+        restart: unless-stopped
+        shm_size: 256mb
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+            interval: 30s
+            timeout: 15s
+
+networks:
+    internalNetwork:
+        driver: bridge
+
+volumes:
+    db_data:
