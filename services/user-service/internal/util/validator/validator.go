@@ -38,7 +38,7 @@ func (v *Validator) validatePassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("Password must be at least 8 character long") // early exit before for loop
 	}
-	result := make([]error, 0, 4)
+	result := make([]error, 0, 3)
 	var isSpecial, isDigit, isUpper bool
 	for _, char := range password {
 		if unicode.IsDigit(char) {
