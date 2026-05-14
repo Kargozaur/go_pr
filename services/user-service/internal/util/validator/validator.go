@@ -15,10 +15,10 @@ func NewValidator() *Validator {
 
 func (v *Validator) ValidateSchema(schema schemas.UserDefaultSchema) error {
 	result := make([]error, 0, 2)
-	if err := v.verifyEmail(schema.Email); err != nil {
+	if err := v.VerifyEmail(schema.Email); err != nil {
 		result = append(result, err)
 	}
-	if err := v.validatePassword(schema.Password); err != nil {
+	if err := v.ValidatePassword(schema.Password); err != nil {
 		result = append(result, err)
 	}
 	if len(result) != 0 {
@@ -27,14 +27,14 @@ func (v *Validator) ValidateSchema(schema schemas.UserDefaultSchema) error {
 	return nil
 }
 
-func (v *Validator) verifyEmail(email string) error {
+func (v *Validator) VerifyEmail(email string) error {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (v *Validator) validatePassword(password string) error {
+func (v *Validator) ValidatePassword(password string) error {
 	if len(password) < 8 {
 		return errors.New("Password must be at least 8 character long") // early exit before for loop
 	}
