@@ -9,14 +9,36 @@ type UserDefaultSchema struct {
 
 // method SwapWithHash must be called before ToModel()
 // to ensure that the hashed password will be written in the database
-type CreateUserSchema struct {
+type UserSchema struct {
 	UserDefaultSchema
 }
 
-func (c *CreateUserSchema) ToModel() *models.User {
+type UserUpdateSchema struct {
+	Email    *string
+	Password *string
+}
+
+func (c *UserSchema) ToModel() *models.User {
 	return &models.User{Email: c.Email, Password: c.Password}
 }
 
-func (c *CreateUserSchema) SwapWithHash(newPassword string) {
+func (c *UserSchema) SwapWithHash(newPassword string) {
 	c.Password = newPassword
+}
+
+func (c *UserUpdateSchema) ToModel() *models.User {
+	user := new(models.User)
+	if c.Email != nil {
+		user.Email = *c.Email
+	}
+	if c.Password != nil {
+		user.Password = *c.Password
+	}
+	return user
+}
+
+func (c *UserUpdateSchema) SwapPassword(passwordHash string) {
+	if c.Password != nil {
+		c.Password = &passwordHash
+	}
 }

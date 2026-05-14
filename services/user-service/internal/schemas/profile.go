@@ -6,12 +6,19 @@ import (
 	"github.com/google/uuid"
 )
 
-// method SetUUID must be called before ToModel
 type Profile struct {
-	UserDefaultSchema
 	FirstName string    `json:"firstName"`
 	LastName  string    `json:"lastName"`
 	userID    uuid.UUID `json:"-"`
+}
+
+type UpdateProfile struct {
+	FirstName *string `json:"firstName,omitempty"`
+	LastName  *string `json:"lastName,omitempty"`
+}
+
+func NewProfile(firstName, lastName string, userID uuid.UUID) Profile {
+	return Profile{FirstName: firstName, LastName: lastName, userID: userID}
 }
 
 func (p *Profile) ToModel() *models.Profile {
@@ -25,6 +32,13 @@ func (p *Profile) ToModel() *models.Profile {
 	}
 }
 
-func (p *Profile) SetUUID(userID uuid.UUID) {
-	p.userID = userID
+func (p *UpdateProfile) ToModel() *models.Profile {
+	profile := new(models.Profile)
+	if p.FirstName != nil {
+		profile.FirstName = *p.FirstName
+	}
+	if p.LastName != nil {
+		profile.LastName = *p.LastName
+	}
+	return profile
 }

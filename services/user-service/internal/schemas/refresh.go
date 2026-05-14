@@ -11,17 +11,13 @@ type RefreshSchema struct {
 	tokenHash string
 }
 
+func NewRefreshSchema(userID uuid.UUID, tokenHash string) RefreshSchema {
+	return RefreshSchema{userID: userID, tokenHash: tokenHash}
+}
+
 func (r *RefreshSchema) ToModel() *models.RefreshTokens {
 	return &models.RefreshTokens{
 		UserID:    r.userID,
 		TokenHash: r.tokenHash,
 	}
-}
-
-func (r *RefreshSchema) SetUUID(userID uuid.UUID) {
-	r.userID = userID
-}
-
-func (r *RefreshSchema) SetHash(tokenHash string) {
-	r.tokenHash = tokenHash
 }
