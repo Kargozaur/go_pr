@@ -3,7 +3,8 @@ package refresh
 import (
 	"context"
 	m "ecommerce/user-service/internal/models"
-	s "ecommerce/user-service/internal/schemas"
+	"ecommerce/user-service/internal/repo"
+	"errors"
 
 	"github.com/uptrace/bun"
 )
@@ -16,8 +17,11 @@ func NewRefreshRepo(db *bun.DB) *RefreshRepo {
 	return &RefreshRepo{db: db}
 }
 
-func (r *RefreshRepo) Create(ctx context.Context, refreshSchema s.RefreshSchema, db bun.IDB) (*m.RefreshTokens, error) {
-	refreshToken := refreshSchema.ToModel()
+func (r *RefreshRepo) Create(ctx context.Context, refreshSchema repo.RepoType, db bun.IDB) (any, error) {
+	refreshToken, ok := refreshSchema.ToModel().(m.RefreshTokens)
+	if !ok {
+		return nil, errors.New("Wrong model was passed")
+	}
 	_, err := db.NewInsert().
 		Model(refreshToken).
 		Exec(ctx)
@@ -27,7 +31,10 @@ func (r *RefreshRepo) Create(ctx context.Context, refreshSchema s.RefreshSchema,
 	return nil, nil
 }
 
-func (r *RefreshRepo) Read(ctx context.Context, tokenHash string) (*m.RefreshTokens, error) {
+func (r *RefreshRepo) Read(ctx context.Context, tokenHash any) (any, error) {
+	if _, ok := tokenHash.(string); !ok {
+		return nil, errors.New("token hash must be passed as string")
+	}
 	refreshToken := new(m.RefreshTokens)
 	err := r.db.NewSelect().
 		Model(refreshToken).
@@ -40,11 +47,14 @@ func (r *RefreshRepo) Read(ctx context.Context, tokenHash string) (*m.RefreshTok
 }
 
 // Implementation ommited
-func (r *RefreshRepo) Update(ctx context.Context, tokenHash string, schema s.RefreshSchema, db bun.IDB) (*m.RefreshTokens, error) {
+func (r *RefreshRepo) Update(ctx context.Context, tokenHash any, schema repo.RepoType, db bun.IDB) (any, error) {
 	return nil, nil
 }
 
-func (r *RefreshRepo) Delete(ctx context.Context, tokenHash string, db bun.IDB) (bool, error) {
+func (r *RefreshRepo) Delete(ctx context.Context, tokenHash any, db bun.IDB) (bool, error) {
+	if _, ok := tokenHash.(string); !ok {
+		return false, errors.New("Token hash must be passed as string")
+	}
 	refreshToken := new(m.RefreshTokens)
 	result, err := db.NewDelete().
 		Model(refreshToken).

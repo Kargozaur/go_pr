@@ -2,8 +2,9 @@ package user
 
 import (
 	"context"
+	"ecommerce/user-service/internal/models"
 	m "ecommerce/user-service/internal/models"
-	s "ecommerce/user-service/internal/schemas"
+	"ecommerce/user-service/internal/repo"
 	"errors"
 
 	"github.com/google/uuid"
@@ -20,8 +21,11 @@ func NewUserRepository(db *bun.DB) *UserRepository {
 	}
 }
 
-func (u *UserRepository) Create(ctx context.Context, userSchema s.UserSchema, db bun.IDB) (*m.User, error) {
-	user := userSchema.ToModel()
+func (u *UserRepository) Create(ctx context.Context, userSchema repo.RepoType, db bun.IDB) (any, error) {
+	user, ok := userSchema.ToModel().(models.User)
+	if !ok {
+		return nil, errors.New("Wrong model passed")
+	}
 	err := db.NewInsert().Model(user).Returning("*").Scan(ctx, user)
 	if err != nil {
 		return nil, err
@@ -29,7 +33,10 @@ func (u *UserRepository) Create(ctx context.Context, userSchema s.UserSchema, db
 	return user, nil
 }
 
-func (u *UserRepository) Read(ctx context.Context, email string) (*m.User, error) {
+func (u *UserRepository) Read(ctx context.Context, email any) (any, error) {
+	if _, ok := email.(string); !ok {
+		return nil, errors.New("email must be passed as a string")
+	}
 	user := new(m.User)
 	err := u.db.NewSelect().
 		Model(user).
@@ -42,8 +49,14 @@ func (u *UserRepository) Read(ctx context.Context, email string) (*m.User, error
 	return user, nil
 }
 
-func (u *UserRepository) Update(ctx context.Context, email string, userSchema s.UserUpdateSchema, db bun.IDB) (*m.User, error) {
-	user := userSchema.ToModel()
+func (u *UserRepository) Update(ctx context.Context, email any, userSchema repo.RepoType, db bun.IDB) (any, error) {
+	if _, ok := email.(string); !ok {
+		return nil, errors.New("email must be passed as a string")
+	}
+	user, ok := userSchema.ToModel().(*models.User)
+	if !ok {
+		return nil, errors.New("Wrong model passed")
+	}
 	err := db.NewUpdate().
 		Model(user).
 		Where("email = ?", email).
@@ -59,6 +72,6 @@ func (u *UserRepository) Update(ctx context.Context, email string, userSchema s.
 }
 
 // Method to satisfy the interface requirements. No implementation is provided
-func (u *UserRepository) Delete(ctx context.Context, userID uuid.UUID, db bun.IDB) (bool, error) {
+func (u *UserRepository) Delete(ctx context.Context, userID any, db bun.IDB) (bool, error) {
 	return true, nil
 }
