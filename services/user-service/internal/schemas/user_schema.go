@@ -18,7 +18,7 @@ type UserUpdateSchema struct {
 	Password *string `json:"password"`
 }
 
-func (c *UserSchema) ToModel() *models.User {
+func (c *UserSchema) ToModel() any {
 	return &models.User{Email: c.Email, Password: c.Password}
 }
 
@@ -26,7 +26,7 @@ func (c *UserSchema) SwapWithHash(newPassword string) {
 	c.Password = newPassword
 }
 
-func (c *UserUpdateSchema) ToModel() *models.User {
+func (c *UserUpdateSchema) ToModel() any {
 	user := new(models.User)
 	if c.Email != nil {
 		user.Email = *c.Email

@@ -17,11 +17,11 @@ type UpdateProfile struct {
 	LastName  *string `json:"lastName,omitempty"`
 }
 
-func NewProfile(firstName, lastName string, userID uuid.UUID) Profile {
-	return Profile{FirstName: firstName, LastName: lastName, userID: userID}
+func (p *Profile) SetUUID(userID uuid.UUID) {
+	p.userID = userID
 }
 
-func (p *Profile) ToModel() *models.Profile {
+func (p *Profile) ToModel() any {
 	if p.userID == uuid.Nil {
 		return nil
 	}
@@ -32,7 +32,7 @@ func (p *Profile) ToModel() *models.Profile {
 	}
 }
 
-func (p *UpdateProfile) ToModel() *models.Profile {
+func (p *UpdateProfile) ToModel() any {
 	profile := new(models.Profile)
 	if p.FirstName != nil {
 		profile.FirstName = *p.FirstName
