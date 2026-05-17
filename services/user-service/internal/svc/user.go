@@ -54,6 +54,9 @@ func (u *UserService) Register(ctx context.Context, userData schemas.RegisterSch
 		userSchema := userData.ToUserSchema()
 		userSchema.SwapWithHash(hashedPass)
 		userModel, err := u.userRepo.Create(c, userSchema, tx)
+		if err != nil {
+			return err
+		}
 		user, ok := userModel.(models.User)
 		if !ok {
 			return errors.New("Returned type doesn't match the user model")
