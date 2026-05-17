@@ -56,7 +56,7 @@ func (u *UserService) Register(ctx context.Context, userData schemas.RegisterSch
 		userModel, err := u.userRepo.Create(c, userSchema, tx)
 		user, ok := userModel.(models.User)
 		if !ok {
-			return errors.New("Returned type does not match user model")
+			return errors.New("Returned type doesn't match the user model")
 		}
 		profileSchema := userData.ToUserProfileSchema()
 		profileSchema.SetUUID(user.ID)
