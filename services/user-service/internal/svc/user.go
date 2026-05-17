@@ -10,8 +10,10 @@ import (
 	"ecommerce/user-service/internal/repo/refresh"
 	"ecommerce/user-service/internal/repo/user"
 	"ecommerce/user-service/internal/schemas"
+	"ecommerce/user-service/internal/thasher"
 	"ecommerce/user-service/internal/util/validator"
 	"errors"
+	"time"
 
 	"github.com/uptrace/bun"
 )
@@ -23,10 +25,12 @@ type UserService struct {
 	refreshRepo repo.IRepo
 	validator   validator.IValidator
 	hasher      phasher.IHasher
+	thasher     thasher.IHasher
 	iss         jw.IJWT
 }
 
-func NewUserService(db *bun.DB, validator validator.IValidator, hasher phasher.IHasher, iss jw.IJWT) *UserService {
+func NewUserService(db *bun.DB, validator validator.IValidator, hasher phasher.IHasher,
+	thasher thasher.IHasher, iss jw.IJWT) *UserService {
 	userRepo := user.NewUserRepository(db)
 	profileRepo := user.NewProfileRepo(db)
 	refreshRepo := refresh.NewRefreshRepo(db)
@@ -37,6 +41,7 @@ func NewUserService(db *bun.DB, validator validator.IValidator, hasher phasher.I
 		refreshRepo: refreshRepo,
 		validator:   validator,
 		hasher:      hasher,
+		thasher:     thasher,
 		iss:         iss,
 	}
 }
@@ -73,4 +78,46 @@ func (u *UserService) Register(ctx context.Context, userData schemas.RegisterSch
 		return err
 	}
 	return nil
+}
+
+func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema) (*schemas.TokenResponse, error) {
+	userModel, err := u.userRepo.Read(ctx, loginSchema.Email)
+	if err != nil {
+		return nil, errors.New("Invalid credentials")
+	}
+	user, ok := userModel.(models.User)
+	if !ok {
+		return nil, errors.New("Returned type doesn't match the user model")
+	}
+	if ok := u.hasher.VerifyPassword(loginSchema.Password, user.Password); !ok {
+		return nil, errors.New("Invalid credentials")
+	}
+	if err != nil {
+		return nil, err
+	}
+	accessToken, err := u.iss.Issue(user.ID, int(time.Now().UTC().Add(time.Minute*30).Unix()))
+	if err != nil {
+		return nil, err
+	}
+	refreshToken, err := u.iss.Issue(user.ID, int(time.Now().UTC().Add(time.Hour*72).Unix()))
+	if err != nil {
+		return nil, err
+	}
+	refreshSchema := schemas.NewRefreshSchema(user.ID, u.thasher.Hash(refreshToken))
+	tx, err := u.db.BeginTx(ctx, &sql.TxOptions{})
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	_, err = u.refreshRepo.Create(ctx, refreshSchema, tx)
+	if err != nil {
+		return nil, err
+	}
+	return &schemas.TokenResponse{AccessToken: accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+	}, nil
 }

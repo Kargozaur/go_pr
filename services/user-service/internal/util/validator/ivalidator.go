@@ -6,4 +6,6 @@ import (
 
 type IValidator interface {
 	ValidateSchema(schemas.UserDefaultSchema) error
+	VerifyEmail(string) error
+	ValidatePassword(string) error
 }
