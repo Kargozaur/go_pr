@@ -6,6 +6,7 @@ import (
 	"ecommerce/user-service/internal/repo"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
@@ -51,15 +52,17 @@ func (r *RefreshRepo) Update(ctx context.Context, tokenHash any, schema repo.Rep
 	return nil, nil
 }
 
-func (r *RefreshRepo) Delete(ctx context.Context, tokenHash any, db bun.IDB) (bool, error) {
-	if _, ok := tokenHash.(string); !ok {
-		return false, errors.New("Token hash must be passed as string")
+func (r *RefreshRepo) Delete(ctx context.Context, identifier any, db bun.IDB) (bool, error) {
+	query := db.NewDelete()
+	switch identifier.(type) {
+	case uuid.UUID:
+		query = query.Where("user_id = ?", identifier)
+	case string:
+		query = query.Where("token_hash = ?", identifier)
+	default:
+		return false, errors.New("Either user id or token hash must be passed")
 	}
-	refreshToken := new(m.RefreshTokens)
-	result, err := db.NewDelete().
-		Model(refreshToken).
-		Where("token_hash = ?", tokenHash).
-		Exec(ctx)
+	result, err := query.Exec(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -67,5 +70,9 @@ func (r *RefreshRepo) Delete(ctx context.Context, tokenHash any, db bun.IDB) (bo
 	if err != nil {
 		return false, nil
 	}
-	return affected == 1, nil
+	if _, ok := identifier.(string); ok {
+		return affected == 1, nil
+	} else {
+		return affected >= 1, nil
+	}
 }
