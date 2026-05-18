@@ -68,7 +68,7 @@ func (r *RefreshRepo) Delete(ctx context.Context, identifier any, db bun.IDB) (b
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	if _, ok := identifier.(string); ok {
 		return affected == 1, nil
