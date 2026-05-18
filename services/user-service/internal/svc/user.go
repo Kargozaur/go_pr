@@ -121,3 +121,25 @@ func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema
 		TokenType:    "Bearer",
 	}, nil
 }
+
+func (u *UserService) Logout(ctx context.Context, identifier any) error {
+	tx, err := u.db.BeginTx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	res, err := u.refreshRepo.Delete(ctx, identifier, tx)
+	if err != nil {
+		return err
+	}
+	if !res {
+		return errors.New("Failed to logout the user")
+	}
+	return nil
+}
