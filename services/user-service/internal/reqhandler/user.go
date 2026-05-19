@@ -9,6 +9,7 @@ import (
 	"ecommerce/user-service/internal/thasher"
 	"ecommerce/user-service/internal/util/validator"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
@@ -51,7 +52,31 @@ func (h *Handler) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.SetCookie("access_token", tokenPair.AccessToken, 60*15, "/", "localhost", true, true)
-	c.SetCookie("refresh_token", tokenPair.RefreshToken, 60*60*24*7, "/", "localhost", true, true)
+	c.SetCookie("access_token", tokenPair.AccessToken, 60*15, "/", os.Getenv("HOST"), true, true)
+	c.SetCookie("refresh_token", tokenPair.RefreshToken, 60*60*24*7, "/", os.Getenv("HOST"), true, true)
 	c.JSON(http.StatusOK, gin.H{"access_token": tokenPair.AccessToken, "token_type": tokenPair.TokenType})
+}
+
+func (h *Handler) LogoutAll(c *gin.Context) {
+	userID, ok := c.Get("userID")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to read token"})
+		return
+	}
+	if err := h.service.Logout(c, userID); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": "succesfully logged out"})
+}
+
+func (h *Handler) Logout(c *gin.Context) {
+	token, ok := c.Get("token")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to read token"})
+		return
+	}
+	if err := h.service.Logout(c, token); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": "succesfully logged out"})
 }
