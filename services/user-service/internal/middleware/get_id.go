@@ -16,6 +16,10 @@ func GetID() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "No auth header"})
 		}
 		token := strings.TrimPrefix(header, "Bearer ")
+		fromCookie, _ := c.Request.Cookie("access_token")
+		if token != fromCookie.Value {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Cookie doesn't match header token"})
+		}
 		userID, err := jw.GetID(token)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "failed to parse token"})

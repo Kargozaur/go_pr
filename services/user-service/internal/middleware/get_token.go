@@ -14,6 +14,10 @@ func GetToken() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "No auth header"})
 		}
 		token := strings.TrimPrefix(header, "Bearer ")
+		fromCookie, _ := c.Request.Cookie("access_token")
+		if token != fromCookie.Value {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Cookie doesn't match header token"})
+		}
 		c.Set("token", token)
 		c.Next()
 	}
