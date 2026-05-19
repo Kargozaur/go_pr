@@ -2,8 +2,8 @@ package schemas
 
 type RegisterSchema struct {
 	UserDefaultSchema
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+	FirstName string `json:"firstName" binding:"required"`
+	LastName  string `json:"lastName" binding:"required"`
 }
 
 func (r *RegisterSchema) ToUserSchema() *UserSchema {

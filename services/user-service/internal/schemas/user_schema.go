@@ -3,8 +3,8 @@ package schemas
 import "ecommerce/user-service/internal/models"
 
 type UserDefaultSchema struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 // method SwapWithHash must be called before ToModel()
