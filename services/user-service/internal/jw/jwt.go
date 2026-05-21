@@ -17,7 +17,7 @@ func NewJWT() *JWT {
 	return &JWT{SecretKey: []byte(os.Getenv("JWT_KEY"))}
 }
 
-func (j *JWT) Issue(userID uuid.UUID, t int) (string, error) {
+func (j *JWT) Issue(userID uuid.UUID, t int64) (string, error) {
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": userID.String(),
 		"iat": time.Now().UTC().Unix(),

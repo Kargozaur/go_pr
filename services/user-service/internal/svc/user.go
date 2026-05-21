@@ -95,11 +95,11 @@ func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema
 	if err != nil {
 		return nil, err
 	}
-	accessToken, err := u.iss.Issue(user.ID, int(time.Now().UTC().Add(time.Minute*30).Unix()))
+	accessToken, err := u.iss.Issue(user.ID, time.Now().UTC().Add(time.Minute*30).Unix())
 	if err != nil {
 		return nil, err
 	}
-	refreshToken, err := u.iss.Issue(user.ID, int(time.Now().UTC().Add(time.Hour*72).Unix()))
+	refreshToken, err := u.iss.Issue(user.ID, time.Now().UTC().Add(time.Hour*72).Unix())
 	if err != nil {
 		return nil, err
 	}

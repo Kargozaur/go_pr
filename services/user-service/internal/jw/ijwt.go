@@ -5,6 +5,6 @@ import (
 )
 
 type IJWT interface {
-	Issue(uuid.UUID, int) (string, error)
+	Issue(uuid.UUID, int64) (string, error)
 	GetID(string) (uuid.UUID, error)
 }

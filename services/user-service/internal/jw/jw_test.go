@@ -19,7 +19,7 @@ func TestJWT(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Run("CreateAndVerify", func(t *testing.T) {
-		tokenString, err := jwtProvider.Issue(newUID, int(time.Now().Add(time.Hour).UTC().Unix()))
+		tokenString, err := jwtProvider.Issue(newUID, time.Now().Add(time.Hour).UTC().Unix())
 		if err != nil {
 			t.Fatal(err)
 		}
