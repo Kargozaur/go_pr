@@ -22,7 +22,7 @@ func NewUserRepository(db *bun.DB) *UserRepository {
 }
 
 func (u *UserRepository) Create(ctx context.Context, userSchema repo.RepoType, db bun.IDB) (any, error) {
-	user, ok := userSchema.ToModel().(models.User)
+	user, ok := userSchema.ToModel().(*models.User)
 	if !ok {
 		return nil, errors.New("Wrong model passed")
 	}

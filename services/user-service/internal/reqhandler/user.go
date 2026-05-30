@@ -39,13 +39,14 @@ func (h *Handler) Register(c *gin.Context) {
 	if err := h.service.Register(c, userBody); err != nil {
 		h.logger.Writer.Error("register error", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": "succesfully registred"})
 }
 
 func (h *Handler) Login(c *gin.Context) {
 	var userBody schemas.LoginSchema
-	if err := c.ShouldBindJSON(userBody); err != nil {
+	if err := c.ShouldBindJSON(&userBody); err != nil {
 		h.logger.Writer.Error("bind fail", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -71,6 +72,7 @@ func (h *Handler) LogoutAll(c *gin.Context) {
 	if err := h.service.Logout(c, userID); err != nil {
 		h.logger.Writer.Error("failed to delete token from db", "error", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": "succesfully logged out"})
 }
@@ -85,6 +87,7 @@ func (h *Handler) Logout(c *gin.Context) {
 	if err := h.service.Logout(c, token); err != nil {
 		h.logger.Writer.Error("failed to delete token from db", "error", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 	c.SetCookie("access_token", "", 0, "/", os.Getenv("HOST"), true, true)
 	c.SetCookie("refresh_token", "", 0, "/", os.Getenv("HOST"), true, true)

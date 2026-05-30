@@ -80,7 +80,7 @@ func (u *UserService) Register(ctx context.Context, userData schemas.RegisterSch
 	return nil
 }
 
-func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema) (*schemas.TokenResponse, error) {
+func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema) (res *schemas.TokenResponse, err error) {
 	userModel, err := u.userRepo.Read(ctx, loginSchema.Email)
 	if err != nil {
 		return nil, errors.New("Invalid credentials")
@@ -91,9 +91,6 @@ func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema
 	}
 	if ok := u.hasher.VerifyPassword(loginSchema.Password, user.Password); !ok {
 		return nil, errors.New("Invalid credentials")
-	}
-	if err != nil {
-		return nil, err
 	}
 	accessToken, err := u.iss.Issue(user.ID, time.Now().UTC().Add(time.Minute*30).Unix())
 	if err != nil {
@@ -116,13 +113,14 @@ func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema
 	if err != nil {
 		return nil, err
 	}
-	return &schemas.TokenResponse{AccessToken: accessToken,
+	res = &schemas.TokenResponse{AccessToken: accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",
-	}, nil
+	}
+	return res, nil
 }
 
-func (u *UserService) Logout(ctx context.Context, identifier any) error {
+func (u *UserService) Logout(ctx context.Context, identifier any) (err error) {
 	tx, err := u.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return err
@@ -134,12 +132,23 @@ func (u *UserService) Logout(ctx context.Context, identifier any) error {
 			err = tx.Commit()
 		}
 	}()
-	res, err := u.refreshRepo.Delete(ctx, identifier, tx)
-	if err != nil {
-		return err
-	}
-	if !res {
-		return errors.New("Failed to logout the user")
+	if v, ok := identifier.(string); ok {
+		strIdentifier := u.thasher.Hash(v)
+		res, err := u.refreshRepo.Delete(ctx, strIdentifier, tx)
+		if err != nil {
+			return err
+		}
+		if !res {
+			return errors.New("Failed to logout the user")
+		}
+	} else {
+		res, err := u.refreshRepo.Delete(ctx, identifier, tx)
+		if err != nil {
+			return err
+		}
+		if !res {
+			return errors.New("Failed to logout the user")
+		}
 	}
 	return nil
 }
