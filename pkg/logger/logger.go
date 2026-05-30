@@ -17,7 +17,7 @@ func NewLogWriter(serviceName string) (*Logger, error) {
 	logFile := strings.TrimSpace(serviceName) + ".log"
 	dir := "logs"
 	path := filepath.Join(dir, logFile)
-	if err := os.MkdirAll(path, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
 

@@ -1,7 +1,7 @@
 include makefiles/migrate.make
 include .env
 
-.PHONY: up down tidy run-user run-order create_db build-user
+.PHONY: up down tidy run-user run-order create_db build-user build-gateway
 
 up:
 	docker-compose up -d
@@ -23,5 +23,9 @@ run-user:
 
 create_db:
 	docker exec -it postgres bash ./docker/entrypoint.sh
+
 build-user:
 	go build -o usersvc services/user-service/cmd/main.go
+
+build-gateway:
+	go build -o gateway services/gateway/cmd/main.go
