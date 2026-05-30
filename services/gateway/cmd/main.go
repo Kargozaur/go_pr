@@ -16,7 +16,7 @@ func main() {
 	defer logger.Close()
 	mux := http.NewServeMux()
 	timeWrapped := middleware.ProcessTime(logger, mux)
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"message": "default message"}
 		w.WriteHeader(http.StatusOK)
