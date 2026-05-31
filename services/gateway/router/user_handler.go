@@ -12,8 +12,6 @@ import (
 )
 
 func registerUser(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	w.Header().Set("Content-Type", "application/json")
 	var userStruct schemas.User
 	if err := json.NewDecoder(r.Body).Decode(&userStruct); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -24,14 +22,17 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
-	link := fmt.Sprintf("http://%s:8002/users/register", os.Getenv("HOST"))
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(time.Second*5))
+	link := fmt.Sprintf("http://%s:8002/users/register",
+		os.Getenv("HOST"))
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, "POST", link, bytes.NewBuffer(userBytes))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -42,13 +43,12 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, resp.Status, resp.StatusCode)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write(userBytes)
 }
 
 func loginUser(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	w.Header().Set("Content-Type", "application/json")
 	var loginStruct schemas.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginStruct); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -59,10 +59,13 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
-	link := fmt.Sprintf("http://%s:8002/users/login", os.Getenv("HOST"))
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(time.Second*5))
+	link := fmt.Sprintf("http://%s:8002/users/login",
+		os.Getenv("HOST"))
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, "POST", link, bytes.NewBuffer(loginBytes))
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -82,19 +85,22 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(bodyBytes)
 }
 
 func logoutUserSingle(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	accessCookie, refreshCookie, err := prepareCookie(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	link := fmt.Sprintf("http://%s:8002/users/logout/single", os.Getenv("HOST"))
-	req, err := http.NewRequest("POST", link, nil)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(time.Second*5))
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "POST", link, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -118,19 +124,23 @@ func logoutUserSingle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(bodyBytes)
 }
 
 func logoutUserAll(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	accessCookie, refreshCookie, err := prepareCookie(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	link := fmt.Sprintf("http://%s:8002/users/logout/all", os.Getenv("HOST"))
-	req, err := http.NewRequest("POST", link, nil)
+	link := fmt.Sprintf("http://%s:8002/users/logout/all",
+		os.Getenv("HOST"))
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(time.Second*5))
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "POST", link, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -154,6 +164,7 @@ func logoutUserAll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(bodyBytes)
 }
