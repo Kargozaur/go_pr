@@ -28,4 +28,4 @@ build-user:
 	go build -o usersvc services/user-service/cmd/main.go
 
 build-gateway:
-	go build -o gateway services/gateway/cmd/main.go
+	go build -o apigateway services/gateway/cmd/main.go

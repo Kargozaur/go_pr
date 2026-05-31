@@ -2,6 +2,7 @@ package main
 
 import (
 	"ecommerce/gateway/middleware"
+	"ecommerce/gateway/router"
 	"ecommerce/pkg/logger"
 	"encoding/json"
 	"log"
@@ -16,6 +17,7 @@ func main() {
 	defer logger.Close()
 	mux := http.NewServeMux()
 	timeWrapped := middleware.ProcessTime(logger, mux)
+	router.RegisterUserRouter(mux)
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{"message": "default message"}

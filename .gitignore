@@ -1,4 +1,4 @@
 .env
 usersvc
 logs/
-gateway
+apigateway
