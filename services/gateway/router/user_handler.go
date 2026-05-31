@@ -85,3 +85,87 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(bodyBytes)
 }
+
+func logoutUserSingle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	accessCookie, refreshCookie, err := prepareCookie(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	link := fmt.Sprintf("http://%s:8002/users/logout/single", os.Getenv("HOST"))
+	req, err := http.NewRequest("POST", link, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	req.AddCookie(accessCookie)
+	req.AddCookie(refreshCookie)
+	req.Header.Set("Authorization",
+		fmt.Sprintf("Bearer %s", accessCookie.Value))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, resp.Status, resp.StatusCode)
+		return
+	}
+	bodyBytes, err := json.Marshal(resp.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(bodyBytes)
+}
+
+func logoutUserAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	accessCookie, refreshCookie, err := prepareCookie(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	link := fmt.Sprintf("http://%s:8002/users/logout/all", os.Getenv("HOST"))
+	req, err := http.NewRequest("POST", link, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	req.AddCookie(accessCookie)
+	req.AddCookie(refreshCookie)
+	req.Header.Set("Authorization",
+		fmt.Sprintf("Bearer %s", accessCookie.Value))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, resp.Status, resp.StatusCode)
+		return
+	}
+	bodyBytes, err := json.Marshal(resp.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(bodyBytes)
+}
+
+func prepareCookie(r *http.Request) (*http.Cookie, *http.Cookie, error) {
+	accessCookie, err := r.Cookie("access_token")
+	if err != nil {
+		return nil, nil, err
+	}
+	refreshCookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		return nil, nil, err
+	}
+	return accessCookie, refreshCookie, nil
+}
