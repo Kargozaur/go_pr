@@ -36,7 +36,7 @@ func (v *Validator) VerifyEmail(email string) error {
 
 func (v *Validator) ValidatePassword(password string) error {
 	if len(password) < 8 {
-		return errors.New("Password must be at least 8 characters") // early exit before for loop
+		return errors.New("Password must be at least 8 characters.") // early exit before for loop
 	}
 	result := make([]error, 0, 3)
 	var isSpecial, isDigit, isUpper bool
@@ -55,13 +55,13 @@ func (v *Validator) ValidatePassword(password string) error {
 		}
 	}
 	if !isDigit {
-		result = append(result, errors.New("Password must contain at least one number"))
+		result = append(result, errors.New("Password must contain at least one number."))
 	}
 	if !isSpecial {
-		result = append(result, errors.New("Password must contain at least one special symbol"))
+		result = append(result, errors.New("Password must contain at least one special symbol."))
 	}
 	if !isUpper {
-		result = append(result, errors.New("Password must contain at least one upper case character"))
+		result = append(result, errors.New("Password must contain at least one upper case character."))
 	}
 	return errors.Join(result...)
 }

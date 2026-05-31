@@ -36,7 +36,7 @@ func (h *Handler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.service.Register(c, userBody); err != nil {
+	if err := h.service.Register(c.Request.Context(), userBody); err != nil {
 		h.logger.Writer.Error("register error", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -51,7 +51,7 @@ func (h *Handler) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	tokenPair, err := h.service.Login(c, userBody)
+	tokenPair, err := h.service.Login(c.Request.Context(), userBody)
 	if err != nil {
 		h.logger.Writer.Error("login fail", "error", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -69,7 +69,7 @@ func (h *Handler) LogoutAll(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to read token"})
 		return
 	}
-	if err := h.service.Logout(c, userID); err != nil {
+	if err := h.service.Logout(c.Request.Context(), userID); err != nil {
 		h.logger.Writer.Error("failed to delete token from db", "error", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -84,7 +84,7 @@ func (h *Handler) Logout(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to read token"})
 		return
 	}
-	if err := h.service.Logout(c, token); err != nil {
+	if err := h.service.Logout(c.Request.Context(), token); err != nil {
 		h.logger.Writer.Error("failed to delete token from db", "error", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
