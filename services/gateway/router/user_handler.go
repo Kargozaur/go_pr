@@ -37,6 +37,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		http.Error(w, resp.Status, resp.StatusCode)
 		return
