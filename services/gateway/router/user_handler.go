@@ -1,9 +1,7 @@
 package router
 
 import (
-	"bytes"
 	"context"
-	"ecommerce/gateway/schemas"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,16 +21,6 @@ func NewHandler() *Handler {
 }
 
 func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
-	var userStruct schemas.User
-	if err := json.NewDecoder(r.Body).Decode(&userStruct); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	userBytes, err := json.Marshal(userStruct)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 	ctx, cancel := context.WithTimeout(r.Context(),
 		time.Second*5)
 	defer cancel()
@@ -41,7 +29,7 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost,
 		link,
-		bytes.NewBuffer(userBytes))
+		r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -63,20 +51,15 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(userBytes)
-}
-
-func (h *Handler) loginUser(w http.ResponseWriter, r *http.Request) {
-	var loginStruct schemas.LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&loginStruct); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	loginBytes, err := json.Marshal(loginStruct)
+	body, err := json.Marshal(resp.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Write(body)
+}
+
+func (h *Handler) loginUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(),
 		time.Second*5)
 	defer cancel()
@@ -85,7 +68,7 @@ func (h *Handler) loginUser(w http.ResponseWriter, r *http.Request) {
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost,
 		link,
-		bytes.NewBuffer(loginBytes))
+		r.Body)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -105,14 +88,13 @@ func (h *Handler) loginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, resp.Status, resp.StatusCode)
 		return
 	}
-	bodyBytes, err := json.Marshal(resp.Body)
+	w.Header().Set("Content-Type", "application/json")
+	body, err := json.Marshal(resp.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(bodyBytes)
+	w.Write(body)
 }
 
 func (h *Handler) logoutUserSingle(w http.ResponseWriter, r *http.Request) {
@@ -151,14 +133,13 @@ func (h *Handler) logoutUserSingle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, resp.Status, resp.StatusCode)
 		return
 	}
-	bodyBytes, err := json.Marshal(resp.Body)
+	w.Header().Set("Content-Type", "application/json")
+	body, err := json.Marshal(resp.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(bodyBytes)
+	w.Write(body)
 }
 
 func (h *Handler) logoutUserAll(w http.ResponseWriter, r *http.Request) {
@@ -198,14 +179,13 @@ func (h *Handler) logoutUserAll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, resp.Status, resp.StatusCode)
 		return
 	}
-	bodyBytes, err := json.Marshal(resp.Body)
+	w.Header().Set("Content-Type", "application/json")
+	body, err := json.Marshal(resp.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(bodyBytes)
+	w.Write(body)
 }
 
 func prepareCookie(r *http.Request) (*http.Cookie, *http.Cookie, error) {
