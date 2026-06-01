@@ -34,10 +34,10 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(),
-		time.Duration(time.Second*5))
+		time.Second*5)
+	defer cancel()
 	link := fmt.Sprintf("http://%s:8002/users/register",
 		os.Getenv("HOST"))
-	defer cancel()
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost,
 		link,
@@ -78,7 +78,7 @@ func (h *Handler) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(),
-		time.Duration(time.Second*5))
+		time.Second*5)
 	defer cancel()
 	link := fmt.Sprintf("http://%s:8002/users/login",
 		os.Getenv("HOST"))
@@ -123,7 +123,7 @@ func (h *Handler) logoutUserSingle(w http.ResponseWriter, r *http.Request) {
 	}
 	link := fmt.Sprintf("http://%s:8002/users/logout/single", os.Getenv("HOST"))
 	ctx, cancel := context.WithTimeout(r.Context(),
-		time.Duration(time.Second*5))
+		time.Second*5)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost,
@@ -170,7 +170,7 @@ func (h *Handler) logoutUserAll(w http.ResponseWriter, r *http.Request) {
 	link := fmt.Sprintf("http://%s:8002/users/logout/all",
 		os.Getenv("HOST"))
 	ctx, cancel := context.WithTimeout(context.Background(),
-		time.Duration(time.Second*5))
+		time.Second*5)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost,
