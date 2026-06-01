@@ -56,6 +56,7 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	w.Write(body)
 }
 
@@ -94,6 +95,7 @@ func (h *Handler) loginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusCreated)
 	w.Write(body)
 }
 
@@ -155,6 +157,52 @@ func (h *Handler) logoutUserAll(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx,
 		http.MethodPost,
+		link,
+		nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	req.AddCookie(accessCookie)
+	req.AddCookie(refreshCookie)
+	req.Header.Set("Authorization",
+		fmt.Sprintf("Bearer %s", accessCookie.Value))
+	resp, err := h.client.Do(req)
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			http.Error(w, "request timed out", http.StatusRequestTimeout)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, resp.Status, resp.StatusCode)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	body, err := json.Marshal(resp.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(body)
+}
+
+func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	accessCookie, refreshCookie, err := prepareCookie(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	link := fmt.Sprintf("http://%s:8082/users/profile/me",
+		os.Getenv("HOST"))
+	ctx, cancel := context.WithTimeout(r.Context(),
+		time.Second*5)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx,
+		http.MethodGet,
 		link,
 		nil)
 	if err != nil {
