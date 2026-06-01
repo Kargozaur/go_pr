@@ -12,7 +12,17 @@ import (
 	"time"
 )
 
-func registerUser(w http.ResponseWriter, r *http.Request) {
+type Handler struct {
+	client *http.Client
+}
+
+func NewHandler() *Handler {
+	return &Handler{
+		client: &http.Client{},
+	}
+}
+
+func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 	var userStruct schemas.User
 	if err := json.NewDecoder(r.Body).Decode(&userStruct); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -23,18 +33,21 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(),
+	ctx, cancel := context.WithTimeout(r.Context(),
 		time.Duration(time.Second*5))
 	link := fmt.Sprintf("http://%s:8002/users/register",
 		os.Getenv("HOST"))
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "POST", link, bytes.NewBuffer(userBytes))
+	req, err := http.NewRequestWithContext(ctx,
+		http.MethodPost,
+		link,
+		bytes.NewBuffer(userBytes))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			http.Error(w, "request timed out", http.StatusRequestTimeout)
@@ -53,7 +66,7 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(userBytes)
 }
 
-func loginUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) loginUser(w http.ResponseWriter, r *http.Request) {
 	var loginStruct schemas.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginStruct); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -64,18 +77,21 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(),
+	ctx, cancel := context.WithTimeout(r.Context(),
 		time.Duration(time.Second*5))
+	defer cancel()
 	link := fmt.Sprintf("http://%s:8002/users/login",
 		os.Getenv("HOST"))
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "POST", link, bytes.NewBuffer(loginBytes))
+	req, err := http.NewRequestWithContext(ctx,
+		http.MethodPost,
+		link,
+		bytes.NewBuffer(loginBytes))
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			http.Error(w, "request timed out", http.StatusRequestTimeout)
@@ -99,17 +115,20 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(bodyBytes)
 }
 
-func logoutUserSingle(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) logoutUserSingle(w http.ResponseWriter, r *http.Request) {
 	accessCookie, refreshCookie, err := prepareCookie(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	link := fmt.Sprintf("http://%s:8002/users/logout/single", os.Getenv("HOST"))
-	ctx, cancel := context.WithTimeout(context.Background(),
+	ctx, cancel := context.WithTimeout(r.Context(),
 		time.Duration(time.Second*5))
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "POST", link, nil)
+	req, err := http.NewRequestWithContext(ctx,
+		http.MethodPost,
+		link,
+		nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -118,7 +137,7 @@ func logoutUserSingle(w http.ResponseWriter, r *http.Request) {
 	req.AddCookie(refreshCookie)
 	req.Header.Set("Authorization",
 		fmt.Sprintf("Bearer %s", accessCookie.Value))
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			http.Error(w, "request timed out", http.StatusRequestTimeout)
@@ -142,7 +161,7 @@ func logoutUserSingle(w http.ResponseWriter, r *http.Request) {
 	w.Write(bodyBytes)
 }
 
-func logoutUserAll(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) logoutUserAll(w http.ResponseWriter, r *http.Request) {
 	accessCookie, refreshCookie, err := prepareCookie(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -153,7 +172,10 @@ func logoutUserAll(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(time.Second*5))
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "POST", link, nil)
+	req, err := http.NewRequestWithContext(ctx,
+		http.MethodPost,
+		link,
+		nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -162,7 +184,7 @@ func logoutUserAll(w http.ResponseWriter, r *http.Request) {
 	req.AddCookie(refreshCookie)
 	req.Header.Set("Authorization",
 		fmt.Sprintf("Bearer %s", accessCookie.Value))
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			http.Error(w, "request timed out", http.StatusRequestTimeout)
