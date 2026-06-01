@@ -43,6 +43,7 @@ func (p *ProfileRepo) Read(ctx context.Context, userID any) (any, error) {
 		Model(profile).
 		Relation("User").
 		Where("profiles.user_id = ?", v).
+		Column("profiles.first_name", "profiles.last_name", "users.email").
 		Limit(1).
 		Scan(ctx, profile)
 	if err != nil {
