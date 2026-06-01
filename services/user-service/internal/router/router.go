@@ -4,6 +4,7 @@ import (
 	"ecommerce/pkg/logger"
 	"ecommerce/user-service/internal/middleware"
 	"ecommerce/user-service/internal/reqhandler"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
@@ -11,13 +12,14 @@ import (
 
 func NewAuthRouter(db *bun.DB, logger *logger.Logger, rg *gin.RouterGroup) {
 	h := reqhandler.NewHandler(db, logger)
-	rg.POST("/register", h.Register)
-	rg.POST("/login", h.Login)
+	timeout := middleware.TimeoutMiddleware(time.Duration(time.Second * 7))
+	rg.POST("/register", h.Register, timeout)
+	rg.POST("/login", h.Login, timeout)
 	profile := rg.Group("/profile", middleware.GetID())
 	{
-		profile.GET("/me", h.GetProfile)
+		profile.GET("/me", h.GetProfile, timeout)
 	}
-	logout := rg.Group("/logout", middleware.GetToken(), middleware.GetID())
+	logout := rg.Group("/logout", middleware.GetToken(), middleware.GetID(), timeout)
 	{
 		logout.POST("/single", h.Logout)
 		logout.POST("/all", h.LogoutAll)
