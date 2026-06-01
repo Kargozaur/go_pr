@@ -94,3 +94,19 @@ func (h *Handler) Logout(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"success": "succesfully logged out"})
 }
+
+func (h *Handler) GetProfile(c *gin.Context) {
+	userID, ok := c.Get("userID")
+	if !ok {
+		h.logger.Writer.Error("failed to get user id from middleware", "error", "user id not found")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found"})
+		return
+	}
+	profile, err := h.service.GetProfile(c.Request.Context(), userID)
+	if err != nil {
+		h.logger.Writer.Error("failed to get profile", "error", err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, profile)
+}

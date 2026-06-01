@@ -13,6 +13,10 @@ func NewAuthRouter(db *bun.DB, logger *logger.Logger, rg *gin.RouterGroup) {
 	h := reqhandler.NewHandler(db, logger)
 	rg.POST("/register", h.Register)
 	rg.POST("/login", h.Login)
+	profile := rg.Group("/profile", middleware.GetID())
+	{
+		profile.GET("/me", h.GetProfile)
+	}
 	logout := rg.Group("/logout", middleware.GetToken(), middleware.GetID())
 	{
 		logout.POST("/single", h.Logout)

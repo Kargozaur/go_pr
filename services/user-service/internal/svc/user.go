@@ -20,9 +20,9 @@ import (
 
 type UserService struct {
 	db          *bun.DB
-	userRepo    repo.IRepo
-	profileRepo repo.IRepo
-	refreshRepo repo.IRepo
+	userRepo    repo.CRU
+	profileRepo repo.CRU
+	refreshRepo repo.CRD
 	validator   validator.IValidator
 	hasher      phasher.IHasher
 	thasher     thasher.IHasher
@@ -62,7 +62,7 @@ func (u *UserService) Register(ctx context.Context, userData schemas.RegisterSch
 		if err != nil {
 			return err
 		}
-		user, ok := userModel.(models.User)
+		user, ok := userModel.(*models.User)
 		if !ok {
 			return errors.New("Returned type doesn't match the user model")
 		}
@@ -80,12 +80,12 @@ func (u *UserService) Register(ctx context.Context, userData schemas.RegisterSch
 	return nil
 }
 
-func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema) (res *schemas.TokenResponse, err error) {
+func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema) (*schemas.TokenResponse, error) {
 	userModel, err := u.userRepo.Read(ctx, loginSchema.Email)
 	if err != nil {
 		return nil, errors.New("Invalid credentials")
 	}
-	user, ok := userModel.(models.User)
+	user, ok := userModel.(*models.User)
 	if !ok {
 		return nil, errors.New("Returned type doesn't match the user model")
 	}
@@ -102,36 +102,23 @@ func (u *UserService) Login(ctx context.Context, loginSchema schemas.LoginSchema
 	}
 	refreshSchema := schemas.NewRefreshSchema(user.ID, u.thasher.Hash(refreshToken))
 	tx, err := u.db.BeginTx(ctx, &sql.TxOptions{})
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		} else {
-			err = tx.Commit()
-		}
-	}()
+	defer tx.Rollback()
 	_, err = u.refreshRepo.Create(ctx, refreshSchema, tx)
 	if err != nil {
 		return nil, err
 	}
-	res = &schemas.TokenResponse{AccessToken: accessToken,
-		RefreshToken: refreshToken,
-		TokenType:    "Bearer",
-	}
-	return res, nil
+	tx.Commit()
+	return &schemas.TokenResponse{AccessToken: accessToken,
+		TokenType: "Bearer",
+	}, nil
 }
 
-func (u *UserService) Logout(ctx context.Context, identifier any) (err error) {
+func (u *UserService) Logout(ctx context.Context, identifier any) error {
 	tx, err := u.db.BeginTx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		} else {
-			err = tx.Commit()
-		}
-	}()
+	defer tx.Rollback()
 	if v, ok := identifier.(string); ok {
 		strIdentifier := u.thasher.Hash(v)
 		res, err := u.refreshRepo.Delete(ctx, strIdentifier, tx)
@@ -141,6 +128,7 @@ func (u *UserService) Logout(ctx context.Context, identifier any) (err error) {
 		if !res {
 			return errors.New("Failed to logout the user")
 		}
+		tx.Commit()
 	} else {
 		res, err := u.refreshRepo.Delete(ctx, identifier, tx)
 		if err != nil {
@@ -149,6 +137,26 @@ func (u *UserService) Logout(ctx context.Context, identifier any) (err error) {
 		if !res {
 			return errors.New("Failed to logout the user")
 		}
+		tx.Commit()
 	}
 	return nil
+}
+
+func (u *UserService) GetProfile(ctx context.Context, userID any) (*schemas.ProfileResponse, error) {
+	profile, err := u.profileRepo.Read(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	v, ok := profile.(*models.Profile)
+	if !ok {
+		return nil, errors.New("Returned type doesn't match the profile model")
+	}
+	schema := &schemas.ProfileResponse{
+		User: schemas.UserData{Email: v.User.Email},
+		Profile: schemas.Profile{
+			FirstName: v.FirstName,
+			LastName:  v.LastName,
+		},
+	}
+	return schema, nil
 }

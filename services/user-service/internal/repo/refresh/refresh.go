@@ -47,18 +47,13 @@ func (r *RefreshRepo) Read(ctx context.Context, tokenHash any) (any, error) {
 	return refreshToken, nil
 }
 
-// Implementation ommited
-func (r *RefreshRepo) Update(ctx context.Context, tokenHash any, schema repo.RepoType, db bun.IDB) (any, error) {
-	return nil, nil
-}
-
 func (r *RefreshRepo) Delete(ctx context.Context, identifier any, db bun.IDB) (bool, error) {
 	query := db.NewDelete()
-	switch identifier.(type) {
+	switch v := identifier.(type) {
 	case uuid.UUID:
-		query = query.Where("user_id = ?", identifier)
+		query = query.Where("user_id = ?", v)
 	case string:
-		query = query.Where("token_hash = ?", identifier)
+		query = query.Where("token_hash = ?", v)
 	default:
 		return false, errors.New("Either user id or token hash must be passed")
 	}

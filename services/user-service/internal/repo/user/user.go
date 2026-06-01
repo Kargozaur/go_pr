@@ -70,8 +70,3 @@ func (u *UserRepository) Update(ctx context.Context, email any, userSchema repo.
 	}
 	return user, nil
 }
-
-// Method to satisfy the interface requirements. No implementation is provided
-func (u *UserRepository) Delete(ctx context.Context, userID any, db bun.IDB) (bool, error) {
-	return true, nil
-}

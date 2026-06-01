@@ -26,4 +26,6 @@ type Profile struct {
 	UserID        uuid.UUID `bun:"user_id,unique"`
 	mixins.UpdatedAt
 	mixins.IDMixin
+
+	User *User `bun:"rel:belongs-to,join:user_id=id"`
 }

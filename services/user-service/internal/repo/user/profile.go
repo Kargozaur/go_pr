@@ -34,15 +34,17 @@ func (p *ProfileRepo) Create(ctx context.Context, profileSchema repo.RepoType, d
 }
 
 func (p *ProfileRepo) Read(ctx context.Context, userID any) (any, error) {
-	if _, ok := userID.(uuid.UUID); !ok {
+	v, ok := userID.(uuid.UUID)
+	if !ok {
 		return nil, errors.New("User ID must be passed as UUID")
 	}
 	profile := new(m.Profile)
 	err := p.db.NewSelect().
 		Model(profile).
-		Where("user_id = ?", userID).
+		Relation("User").
+		Where("profiles.user_id = ?", v).
 		Limit(1).
-		Scan(ctx)
+		Scan(ctx, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +52,8 @@ func (p *ProfileRepo) Read(ctx context.Context, userID any) (any, error) {
 }
 
 func (p *ProfileRepo) Update(ctx context.Context, userID any, updateSchema repo.RepoType, db bun.IDB) (any, error) {
-	if _, ok := userID.(uuid.UUID); !ok {
+	v, ok := userID.(uuid.UUID)
+	if !ok {
 		return nil, errors.New("User ID must be passed as UUID")
 	}
 	profile, ok := updateSchema.ToModel().(*m.Profile)
@@ -59,16 +62,11 @@ func (p *ProfileRepo) Update(ctx context.Context, userID any, updateSchema repo.
 	}
 	err := db.NewUpdate().
 		Model(profile).
-		Where("user_id = ?", userID).
+		Where("user_id = ?", v).
 		Returning("*").
 		Scan(ctx, profile)
 	if err != nil {
 		return nil, err
 	}
 	return profile, nil
-}
-
-// Implementation to satisfy the interface
-func (p *ProfileRepo) Delete(ctx context.Context, userID any, db bun.IDB) (bool, error) {
-	return true, nil
 }
