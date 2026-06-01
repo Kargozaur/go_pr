@@ -5,6 +5,7 @@ import (
 	"context"
 	"ecommerce/gateway/schemas"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -35,6 +36,10 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			http.Error(w, "request timed out", http.StatusRequestTimeout)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -72,6 +77,10 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			http.Error(w, "request timed out", http.StatusRequestTimeout)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -111,6 +120,10 @@ func logoutUserSingle(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf("Bearer %s", accessCookie.Value))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			http.Error(w, "request timed out", http.StatusRequestTimeout)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -151,6 +164,10 @@ func logoutUserAll(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf("Bearer %s", accessCookie.Value))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			http.Error(w, "request timed out", http.StatusRequestTimeout)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
